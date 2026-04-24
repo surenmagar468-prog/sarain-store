@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARAIN - Product</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; }
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 50px; border-bottom: 1px solid #eee; }
+        .logo { font-size: 28px; font-weight: 900; letter-spacing: 3px; color: #111; text-decoration: none; }
+        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links a { text-decoration: none; color: #111; font-size: 15px; font-weight: 500; }
+        .container { max-width: 1300px; margin: 40px auto; padding: 0 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+        .gallery { position: relative; }
+        .main-img { width: 100%; height: 550px; object-fit: cover; border-radius: 12px; background: #f5f5f5; }
+        .thumbnails { display: flex; gap: 10px; margin-top: 15px; }
+        .thumb { width: 80px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .thumb:hover, .thumb.active { border-color: #111; }
+        .info h1 { font-size: 32px; margin-bottom: 5px; }
+        .info .cat { color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        .info .price { font-size: 30px; font-weight: 700; margin-bottom: 5px; }
+        .sale-price { color: #e00; }
+        .original-price { text-decoration: line-through; color: #999; font-size: 20px; margin-left: 10px; }
+        .info .stock { color: #0a0; margin-bottom: 20px; font-weight: 600; }
+        .info .desc { color: #555; line-height: 1.8; margin-bottom: 25px; }
+        .sizes { display: flex; gap: 10px; margin-bottom: 25px; }
+        .size-btn { padding: 10px 20px; border: 1px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .size-btn:hover, .size-btn.active { background: #111; color: #fff; border-color: #111; }
+        .btn { padding: 16px 40px; background: #111; color: #fff; border: none; border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .btn:hover { background: #333; }
+        .btn-outline { background: #fff; color: #111; border: 2px solid #111; margin-left: 10px; }
+        .btn-outline:hover { background: #111; color: #fff; }
+        .message { padding: 12px; border-radius: 8px; margin: 15px 0; display: none; }
+        .message.success { background: #d4edda; color: #155724; display: block; }
+        .nav-btns { position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between; transform: translateY(-50%); }
+        .nav-btn { background: rgba(255,255,255,0.8); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px; }
+        footer { background: #111; color: #666; text-align: center; padding: 30px; margin-top: 60px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; padding: 20px; } .main-img { height: 400px; } }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">SARAIN</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/men">Men</a></li>
+            <li><a href="/women">Women</a></li>
+            <li><a href="/kids">Kids</a></li>
+        </ul>
+        <a href="/checkout" style="text-decoration:none;color:#111;">🛒 Cart</a>
+    </nav>
+
+    <div class="container">
+        <div class="gallery">
+            <img id="main-img" class="main-img" src="" alt="Product">
+            <div class="nav-btns">
+                <button class="nav-btn" onclick="prevImg()">◀</button>
+                <button class="nav-btn" onclick="nextImg()">▶</button>
+            </div>
+            <div class="thumbnails" id="thumbnails"></div>
+        </div>
+        <div class="info">
+            <p class="cat" id="p-cat"></p>
+            <h1 id="p-name"></h1>
+            <p class="price"><span class="sale-price" id="sale-p"></span><span class="original-price" id="orig-p"></span><span id="reg-p"></span></p>
+            <p class="stock" id="p-stock"></p>
+            <p class="desc" id="p-desc"></p>
+            <p style="font-weight:600;margin-bottom:10px;">Select Size:</p>
+            <div class="sizes" id="sizes-container"></div>
+            <button class="btn" onclick="addToCart()">🛒 Add to Cart</button>
+            <a href="/checkout" class="btn btn-outline">Buy Now</a>
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+    <footer>© 2024 SARAIN. All rights reserved.</footer>
+
+    <script>
+        const id = window.location.pathname.split('/').pop();
+        let product = {}, images = [], currentImg = 0, selectedSize = 'M';
+
+        fetch('/api/products/' + id).then(r => r.json()).then(p => {
+            product = p;
+            document.getElementById('p-name').textContent = p.name;
+            document.getElementById('p-cat').textContent = p.category + (p.subcategory ? ' / ' + p.subcategory : '');
+            document.getElementById('p-desc').textContent = p.description || 'Premium quality product from SARAIN.';
+            document.getElementById('p-stock').textContent = p.stock > 0 ? '✅ In Stock (' + p.stock + ' available)' : '❌ Out of Stock';
+            document.title = p.name + ' - SARAIN';
+
+            if (p.sale_price) {
+                document.getElementById('sale-p').textContent = 'Rs. ' + p.sale_price;
+                document.getElementById('orig-p').textContent = 'Rs. ' + p.price;
+                document.getElementById('reg-p').style.display = 'none';
+            } else {
+                document.getElementById('reg-p').textContent = 'Rs. ' + p.price;
+                document.getElementById('sale-p').style.display = 'none';
+                document.getElementById('orig-p').style.display = 'none';
+            }
+
+            images = p.images ? p.images.split(',') : [p.image || 'https://placehold.co/600x550/f5f5f5/999?text=No+Image'];
+            if (images.length === 0) images = ['https://placehold.co/600x550/f5f5f5/999?text=No+Image'];
+            showImage(0);
+
+            const thumbDiv = document.getElementById('thumbnails');
+            images.forEach((img, i) => {
+                thumbDiv.innerHTML += `<img src="${img}" class="thumb ${i===0?'active':''}" onclick="showImage(${i})">`;
+            });
+
+            const sizes = p.sizes ? p.sizes.split(',') : ['S', 'M', 'L', 'XL'];
+            const sizeDiv = document.getElementById('sizes-container');
+            sizes.forEach(s => {
+                sizeDiv.innerHTML += `<button class="size-btn ${s.trim()==='M'?'active':''}" onclick="selectSize('${s.trim()}')">${s.trim()}</button>`;
+            });
+        });
+
+        function showImage(i) { currentImg = i; document.getElementById('main-img').src = images[i]; document.querySelectorAll('.thumb').forEach((t,j) => t.classList.toggle('active', j===i)); }
+        function nextImg() { showImage((currentImg + 1) % images.length); }
+        function prevImg() { showImage((currentImg - 1 + images.length) % images.length); }
+        function selectSize(s) { selectedSize = s; document.querySelectorAll('.size-btn').forEach(b => b.classList.toggle('active', b.textContent.trim()===s)); }
+
+        function addToCart() {
+            let cart = JSON.parse(localStorage.getItem('sarain-cart') || '[]');
+            const existing = cart.find(c => c.id === product.id && c.size === selectedSize);
+            if (existing) existing.quantity++;
+            else cart.push({ id: product.id, name: product.name, price: product.sale_price || product.price, image: images[0], quantity: 1, size: selectedSize });
+            localStorage.setItem('sarain-cart', JSON.stringify(cart));
+            const msg = document.getElementById('message'); msg.textContent = '✅ Added to cart!'; msg.className = 'message success';
+            setTimeout(() => msg.className = 'message', 2000);
+        }
+    </script>
+</body>
+</html>

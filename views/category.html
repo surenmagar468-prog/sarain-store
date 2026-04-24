@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARAIN - Shop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; }
+        
+        .top-bar { background: #111; color: #fff; text-align: center; padding: 8px; font-size: 13px; }
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #fff; z-index: 100; }
+        .logo { font-size: 28px; font-weight: 900; letter-spacing: 3px; color: #111; text-decoration: none; }
+        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links a { text-decoration: none; color: #111; font-size: 15px; font-weight: 500; }
+        .nav-links a:hover, .nav-links a.active { text-decoration: underline; font-weight: 700; }
+        .nav-icons { display: flex; gap: 20px; align-items: center; }
+        .nav-icons button { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .cart-count { background: #111; color: #fff; border-radius: 50%; padding: 2px 7px; font-size: 11px; position: relative; top: -8px; left: -5px; }
+        
+        .category-header { text-align: center; padding: 60px 20px 30px; }
+        .category-header h1 { font-size: 48px; font-weight: 900; letter-spacing: 2px; }
+        .category-header p { color: #666; margin-top: 10px; }
+        
+        .subcategory-nav { display: flex; justify-content: center; gap: 15px; padding: 20px; flex-wrap: wrap; border-bottom: 1px solid #eee; margin-bottom: 30px; }
+        .sub-btn { padding: 10px 25px; border: 1px solid #ddd; background: #fff; border-radius: 25px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .sub-btn:hover, .sub-btn.active { background: #111; color: #fff; border-color: #111; }
+        
+        .section { padding: 20px 40px 60px; max-width: 1300px; margin: 0 auto; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .product-card { cursor: pointer; transition: transform 0.3s; }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-card img { width: 100%; height: 350px; object-fit: cover; border-radius: 8px; background: #f0f0f0; }
+        .product-card h3 { margin: 10px 0 5px; font-size: 16px; font-weight: 600; }
+        .product-card .sub { color: #999; font-size: 13px; }
+        .product-card .price { font-weight: 700; font-size: 18px; margin-top: 5px; }
+        .sale-price { color: #e00; margin-right: 8px; }
+        .original-price { text-decoration: line-through; color: #999; font-size: 14px; }
+        .no-products { text-align: center; color: #999; padding: 50px; }
+        
+        footer { background: #111; color: #fff; padding: 40px; text-align: center; margin-top: 60px; color: #666; }
+        
+        @media (max-width: 768px) {
+            nav { padding: 15px 20px; }
+            .nav-links { display: none; }
+            .category-header h1 { font-size: 32px; }
+            .section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">Free Shipping on Orders Over Rs. 5000 | Easy Returns</div>
+    
+    <nav>
+        <a href="/" class="logo">SARAIN</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/men" id="nav-men">Men</a></li>
+            <li><a href="/women" id="nav-women">Women</a></li>
+            <li><a href="/kids" id="nav-kids">Kids</a></li>
+        </ul>
+        <div class="nav-icons">
+            <button onclick="openCart()">🛒 <span class="cart-count" id="cart-count">0</span></button>
+            <button onclick="openLogin()">👤</button>
+        </div>
+    </nav>
+
+    <div class="category-header">
+        <h1 id="page-title">Loading...</h1>
+        <p id="page-subtitle"></p>
+    </div>
+
+    <div class="subcategory-nav" id="sub-nav"></div>
+
+    <div class="section">
+        <div class="products-grid" id="products-container">
+            <p class="no-products">Loading products...</p>
+        </div>
+    </div>
+
+    <footer>© 2024 SARAIN. All rights reserved.</footer>
+
+    <script>
+        const path = window.location.pathname;
+        const category = path === '/men' ? 'Men' : path === '/women' ? 'Women' : path === '/kids' ? 'Kids' : '';
+        
+        document.getElementById('page-title').textContent = category;
+        document.getElementById('page-subtitle').textContent = 'Explore our ' + category.toLowerCase() + ' collection';
+        
+        const navId = 'nav-' + category.toLowerCase();
+        const navEl = document.getElementById(navId);
+        if (navEl) navEl.classList.add('active');
+
+        let currentSub = '';
+
+        const subcategoryMap = {
+            'Men': ['Hoodies', 'T-Shirts', 'Jeans', 'Jackets', 'Shirts'],
+            'Women': ['Sarees', 'Korean Dresses', 'Tops', 'Kurtis', 'Skirts'],
+            'Kids': ['T-Shirts', 'Shorts', 'Dresses', 'Hoodies']
+        };
+
+        function buildSubNav() {
+            const nav = document.getElementById('sub-nav');
+            nav.innerHTML = '<button class="sub-btn active" onclick="filterProducts(\'\')">All</button>';
+            if (subcategoryMap[category]) {
+                subcategoryMap[category].forEach(sub => {
+                    nav.innerHTML += `<button class="sub-btn" onclick="filterProducts('${sub}')">${sub}</button>`;
+                });
+            }
+        }
+
+        function filterProducts(sub) {
+            currentSub = sub;
+            document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            loadProducts();
+        }
+
+        function loadProducts() {
+            let url = '/api/products?category=' + category;
+            if (currentSub) url += '&subcategory=' + currentSub;
+            
+            fetch(url)
+            .then(r => r.json())
+            .then(products => {
+                const container = document.getElementById('products-container');
+                if (products.length === 0) {
+                    container.innerHTML = '<p class="no-products">No products found in this category.</p>';
+                    return;
+                }
+                container.innerHTML = products.map(p => `
+                    <div class="product-card">
+                        <img src="${p.image || 'https://placehold.co/280x350/f0f0f0/999?text=No+Image'}" alt="${p.name}">
+                        <h3>${p.name}</h3>
+                        <p class="sub">${p.subcategory || p.category}</p>
+                        <p class="price">
+                            ${p.sale_price ? '<span class="sale-price">Rs. ' + p.sale_price + '</span><span class="original-price">Rs. ' + p.price + '</span>' : 'Rs. ' + p.price}
+                        </p>
+                    </div>
+                `).join('');
+            });
+        }
+
+        buildSubNav();
+        loadProducts();
+    </script>
+</body>
+</html>

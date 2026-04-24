@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARAIN Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: #111; color: #fff; padding: 30px 20px; }
+        .sidebar h2 { font-size: 24px; margin-bottom: 30px; letter-spacing: 2px; }
+        .sidebar a { display: block; color: #999; text-decoration: none; padding: 10px 0; font-size: 15px; cursor: pointer; }
+        .sidebar a:hover, .sidebar a.active { color: #fff; }
+        .main { flex: 1; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; }
+        .btn { padding: 10px 25px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .btn:hover { background: #333; }
+        .btn-red { background: #e00; }
+        .btn-green { background: #0a0; }
+        .card { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card h3 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f5f5f5; padding: 12px; text-align: left; font-size: 13px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover { background: #fafafa; }
+        .product-img { width: 50px; height: 60px; object-fit: cover; border-radius: 5px; }
+        .message { padding: 10px; border-radius: 8px; margin: 10px 0; display: none; }
+        .message.success { background: #d4edda; color: #155724; display: block; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>SARAIN</h2>
+        <a href="#" class="active" onclick="showTab('add')">➕ Add Product</a>
+        <a href="#" onclick="showTab('products')">📦 All Products</a>
+        <a href="#" onclick="showTab('customers')">👥 Customers</a>
+        <a href="#" onclick="showTab('orders')">📋 Orders</a>
+        <a href="/" style="margin-top:30px;">🏪 View Store</a>
+    </div>
+
+    <div class="main">
+        <div class="header"><h1>Admin Panel</h1><button class="btn btn-red" onclick="logout()">Logout</button></div>
+        <div id="message" class="message"></div>
+
+        <!-- Add Product -->
+        <div class="tab-content active" id="tab-add">
+            <div class="card"><h3>Add New Product</h3>
+                <form id="product-form">
+                    <div class="form-group"><label>Product Name</label><input type="text" id="name" required></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Category</label><select id="category" onchange="updateSubcategories()"><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option></select></div>
+                        <div class="form-group"><label>Subcategory</label><select id="subcategory"><option value="">Select...</option></select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Price (Rs.)</label><input type="number" id="price" required></div>
+                        <div class="form-group"><label>Sale Price (optional)</label><input type="number" id="sale_price"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Stock</label><input type="number" id="stock" value="10"></div>
+                        <div class="form-group"><label>Sizes</label><input type="text" id="sizes" value="S,M,L,XL" placeholder="S,M,L,XL"></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea id="description" rows="3"></textarea></div>
+                    <div class="form-group"><label>Images (Select up to 5)</label><input type="file" id="images" accept="image/*" multiple></div>
+                    <button type="submit" class="btn btn-green" style="width:100%;padding:14px;">➕ Add Product</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="tab-content" id="tab-products">
+            <div class="card"><h3>All Products</h3>
+                <table><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Sub</th><th>Price</th><th>Sale</th><th>Images</th><th>Action</th></tr></thead>
+                <tbody id="products-table"><tr><td colspan="8">Loading...</td></tr></tbody></table>
+            </div>
+        </div>
+
+        <!-- Customers -->
+        <div class="tab-content" id="tab-customers">
+            <div class="card"><h3>Customers</h3>
+                <input type="text" id="user-search" placeholder="🔍 Search username..." style="width:300px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:15px;" oninput="searchUsers()">
+                <table><thead><tr><th>ID</th><th>Username</th><th>Security Q</th><th>Joined</th><th>Action</th></tr></thead>
+                <tbody id="customers-table"><tr><td colspan="5">Loading...</td></tr></tbody></table>
+            </div>
+        </div>
+
+        <!-- Orders -->
+        <div class="tab-content" id="tab-orders">
+            <div class="card"><h3>Orders</h3>
+                <table><thead><tr><th>ID</th><th>Customer</th><th>Total</th><th>Phone</th><th>Address</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody id="orders-table"><tr><td colspan="7">Loading...</td></tr></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('sarain-token');
+        if (!token) window.location.href = '/';
+        let allUsers = [];
+
+        function showTab(t) {
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active');
+            document.querySelectorAll('.sidebar a').forEach((a,i) => { if(i<4) a.classList.remove('active'); });
+            event.target.classList.add('active');
+            if (t==='products') loadProducts();
+            if (t==='customers') loadCustomers();
+            if (t==='orders') loadOrders();
+        }
+
+        function showMessage(t) { const m=document.getElementById('message'); m.textContent=t; m.className='message success'; setTimeout(()=>m.className='message',3000); }
+
+        const subMap = { Men:['Hoodies','T-Shirts','Jeans','Jackets','Shirts'], Women:['Sarees','Korean Dresses','Tops','Kurtis','Skirts'], Kids:['T-Shirts','Shorts','Dresses','Hoodies'] };
+        function updateSubcategories() {
+            const c=document.getElementById('category').value, s=document.getElementById('subcategory');
+            s.innerHTML='<option value="">Select...</option>';
+            if(subMap[c]) subMap[c].forEach(x => s.innerHTML += `<option value="${x}">${x}</option>`);
+        }
+        updateSubcategories();
+
+        document.getElementById('product-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('name',document.getElementById('name').value);
+            fd.append('category',document.getElementById('category').value);
+            fd.append('subcategory',document.getElementById('subcategory').value);
+            fd.append('price',document.getElementById('price').value);
+            fd.append('sale_price',document.getElementById('sale_price').value);
+            fd.append('stock',document.getElementById('stock').value);
+            fd.append('sizes',document.getElementById('sizes').value);
+            fd.append('description',document.getElementById('description').value);
+            const files = document.getElementById('images').files;
+            for (let f of files) fd.append('images', f);
+            fetch('/api/admin/products',{method:'POST',body:fd})
+            .then(r=>r.json()).then(d=>{ if(d.success){showMessage('Product added!');document.getElementById('product-form').reset();updateSubcategories();} });
+        });
+
+        function loadProducts() {
+            fetch('/api/products').then(r=>r.json()).then(p => {
+                const t=document.getElementById('products-table');
+                t.innerHTML = p.length===0 ? '<tr><td colspan="8">No products</td></tr>' : p.map(x=>{
+                    const imgs = x.images ? x.images.split(',') : [x.image||''];
+                    return `<tr><td><img src="${imgs[0]||'https://placehold.co/50x60/f0f0f0/999'}" class="product-img"></td><td>${x.name}</td><td>${x.category}</td><td>${x.subcategory||'-'}</td><td>Rs.${x.price}</td><td>${x.sale_price?'Rs.'+x.sale_price:'-'}</td><td>${imgs.length} images</td><td><button class="btn btn-red" style="padding:5px 15px;font-size:12px;" onclick="delProd(${x.id})">Delete</button></td></tr>`;
+                }).join('');
+            });
+        }
+        function delProd(id) { if(confirm('Delete?')) fetch('/api/admin/products/'+id,{method:'DELETE'}).then(()=>{loadProducts();showMessage('Deleted!');}); }
+
+        function loadCustomers() { fetch('/api/admin/users').then(r=>r.json()).then(u => { allUsers=u; renderUsers(u); }); }
+        function renderUsers(u) {
+            const t=document.getElementById('customers-table');
+            t.innerHTML = u.length===0 ? '<tr><td colspan="5">No users</td></tr>' : u.map(x=>`<tr><td>${x.id}</td><td>${x.username}</td><td>${x.security_question||'-'}</td><td>${x.created_at?new Date(x.created_at).toLocaleDateString():'-'}</td><td><button class="btn btn-red" style="padding:5px 15px;font-size:12px;" onclick="delUser(${x.id})">Delete</button></td></tr>`).join('');
+        }
+        function searchUsers() { renderUsers(allUsers.filter(u => u.username.toLowerCase().includes(document.getElementById('user-search').value.toLowerCase()))); }
+        function delUser(id) { if(confirm('Delete?')) fetch('/api/admin/users/'+id,{method:'DELETE'}).then(r=>r.json()).then(d=>{showMessage(d.message);loadCustomers();}); }
+
+        function loadOrders() {
+            fetch('/api/admin/orders').then(r=>r.json()).then(o => {
+                const t=document.getElementById('orders-table');
+                t.innerHTML = o.length===0 ? '<tr><td colspan="7">No orders</td></tr>' : o.map(x=>`<tr><td>#${x.id}</td><td>${x.name}</td><td>Rs.${x.total}</td><td>${x.phone}</td><td>${x.address}</td><td>${x.status}</td><td>${new Date(x.created_at).toLocaleDateString()}</td></tr>`).join('');
+            });
+        }
+
+        function logout() { localStorage.clear(); window.location.href='/'; }
+    </script>
+</body>
+</html>
