@@ -6,9 +6,9 @@ const multer = require('multer');
 const path = require('path');
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 const SECRET_KEY = 'sarain-secret-2024';
-const db = new sqlite3.Database('./sarain.db');
+const db = new sqlite3.Database('/tmp/sarain.db');
 
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, email TEXT DEFAULT '', password TEXT, security_question TEXT DEFAULT '', security_answer TEXT DEFAULT '', is_admin INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
@@ -27,12 +27,12 @@ db.serialize(() => {
     });
 });
 
-const storage = multer.diskStorage({ destination: './uploads/', filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname) });
+const storage = multer.diskStorage({ destination: '/tmp/uploads/', filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname) });
 const upload = multer({ storage });
 
 app.use(express.json());
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static('/tmp/uploads'));
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'views', 'admin.html')));
@@ -101,7 +101,6 @@ app.get('/api/products/:id', (req, res) => db.get('SELECT * FROM products WHERE 
 app.get('/api/search-history', (req, res) => db.all('SELECT * FROM search_history ORDER BY id DESC LIMIT 10', (err, rows) => res.json(rows || [])));
 app.post('/api/search-history', (req, res) => { if(req.body.term) db.run('INSERT INTO search_history (term) VALUES (?)', [req.body.term]); res.json({ success: true }); });
 
-// Admin: Products with multiple images
 app.post('/api/admin/products', upload.array('images', 5), (req, res) => {
     const { name, description, price, sale_price, category, subcategory, stock, sizes } = req.body;
     const images = req.files ? req.files.map(f => '/uploads/' + f.filename).join(',') : '';
