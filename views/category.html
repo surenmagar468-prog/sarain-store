@@ -128,17 +128,33 @@
                     container.innerHTML = '<p class="no-products">No products found in this category.</p>';
                     return;
                 }
-                container.innerHTML = products.map(p => `
-                    <div class="product-card">
-                        <img src="${p.image || 'https://placehold.co/280x350/f0f0f0/999?text=No+Image'}" alt="${p.name}">
+        function loadProducts() {
+            let url = '/api/products?category=' + category;
+            if (currentSub) url += '&subcategory=' + currentSub;
+            
+            fetch(url)
+            .then(r => r.json())
+            .then(products => {
+                const container = document.getElementById('products-container');
+                if (products.length === 0) {
+                    container.innerHTML = '<p class="no-products">No products found.</p>';
+                    return;
+                }
+                container.innerHTML = products.map(p => {
+                    const imgs = p.images ? p.images.split(',') : [];
+                    const img = imgs[0] || p.image || 'https://placehold.co/280x350/f0f0f0/999?text=No+Image';
+                    return `
+                    <div class="product-card" onclick="window.location.href='/product/${p.id}'">
+                        <img src="${img}" alt="${p.name}">
                         <h3>${p.name}</h3>
                         <p class="sub">${p.subcategory || p.category}</p>
                         <p class="price">
                             ${p.sale_price ? '<span class="sale-price">Rs. ' + p.sale_price + '</span><span class="original-price">Rs. ' + p.price + '</span>' : 'Rs. ' + p.price}
                         </p>
                     </div>
-                `).join('');
+                `}).join('');
             });
+        }
         }
 
         buildSubNav();
