@@ -33,6 +33,7 @@ app.use('/uploads', express.static('/tmp/uploads'));
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html')));
 app.get('/sarain-backend', (req, res) => res.sendFile(path.join(__dirname, 'views', 'admin.html')));
+app.get('/admin', (req, res) => res.redirect('/'));
 app.get('/men', (req, res) => res.sendFile(path.join(__dirname, 'views', 'category.html')));
 app.get('/women', (req, res) => res.sendFile(path.join(__dirname, 'views', 'category.html')));
 app.get('/kids', (req, res) => res.sendFile(path.join(__dirname, 'views', 'category.html')));
